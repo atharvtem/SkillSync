@@ -1,0 +1,512 @@
+#spacy
+import spacy
+from spacy.pipeline import EntityRuler
+from spacy.lang.en import English
+from spacy.tokens import Doc
+
+
+#Visualization
+from spacy import displacy
+from wordcloud import WordCloud
+import plotly.express as px
+import matplotlib.pyplot as plt
+
+#Data loading/ Data manipulation
+import pandas as pd
+import numpy as np
+import jsonlines
+
+#nltk
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+nltk.download(['stopwords','wordnet'])
+
+#warning
+import warnings 
+warnings.filterwarnings('ignore')
+
+#model
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn import metrics
+from sklearn.metrics import accuracy_score
+from pandas.plotting import scatter_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import metrics
+
+# Reading the Resume Dataset 
+df = pd.read_csv("ResumeDataset.csv")
+
+# Shuffle the dataset and take top 1000 records
+
+df = df.reindex(np.random.permutation(df.index))
+data = df.copy().iloc[0:1000,]
+data.head()
+
+print ("Displaying the distinct categories of resume - \n")
+print (data['Category'].unique())
+
+print ("Displaying the distinct categories of resume and the number of records belonging to each category -\n")
+print (data['Category'].value_counts())
+
+# Visualizing the Category count in data
+
+import seaborn as sns
+plt.figure(figsize=(15,15))
+plt.xticks(rotation=90)
+sns.countplot(y="Category", data=data)	
+
+# Visualize the distibution of Categories
+
+from matplotlib.gridspec import GridSpec
+
+targetCounts = data['Category'].value_counts()
+targetLabels  = targetCounts.keys()
+
+# Make square figures and axes
+plt.figure(1, figsize=(25,25))
+the_grid = GridSpec(2, 2)
+
+
+cmap = plt.get_cmap('coolwarm')
+colors = [cmap(i) for i in np.linspace(0, 1, 3)]
+plt.subplot(the_grid[0, 1], aspect=1, title='CATEGORY DISTRIBUTION')
+
+source_pie = plt.pie(targetCounts, labels=targetLabels, autopct='%1.1f%%', shadow=True, colors=colors)
+plt.show()
+
+# Function to clean the resume text by using vaious regular expressions
+
+import re
+def cleanResume(resumeText):
+    review = re.sub(
+        '(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|^rt|http.+?"',
+        " ",
+        resumeText,
+    )
+    review = re.sub('http\S+\s*', ' ', review)  # remove URLs
+    review = re.sub('RT|cc', ' ',review )  # remove RT and cc
+    review = re.sub('#\S+', '',review )  # remove hashtags
+    review = re.sub('@\S+', '  ',review )  # remove mentions
+    review = re.sub('[%s]' % re.escape("""!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""), ' ',review )  # remove punctuations
+    review = re.sub(r'[^\x00-\x7f]',r' ', review) 
+    review = re.sub('\s+', ' ', review ) # remove extra whitespace
+    
+    review = review.lower()
+    review = review.split()
+    lm = WordNetLemmatizer()
+    review = [
+        lm.lemmatize(word)
+        for word in review
+        if not word in set(stopwords.words("english"))
+    ]
+    review = " ".join(review)
+    
+    return review
+    
+# Creating Clean_Resume column to store the cleaned text
+data['Clean_Resume'] = data.Resume.apply(lambda x: cleanResume(x))
+
+# Processes text data from the 'Clean_Resume' column of the dataset,
+# Identifies the most common words, and generates a word cloud
+
+import nltk
+from nltk.corpus import stopwords
+import string
+from wordcloud import WordCloud
+
+oneSetOfStopWords = set(stopwords.words('english')+['``',"''"])
+totalWords =[]
+Sentences = data['Clean_Resume'].values
+cleanedSentences = ""
+for i in range(0,160):
+    cleanedText = Sentences[i]
+    cleanedSentences += cleanedText
+    requiredWords = nltk.word_tokenize(cleanedText)
+    for word in requiredWords:
+        if word not in oneSetOfStopWords and word not in string.punctuation:
+            totalWords.append(word)
+    
+wordfreqdist = nltk.FreqDist(totalWords)
+mostcommon = wordfreqdist.most_common(50)
+print(mostcommon)
+
+wc = WordCloud().generate(cleanedSentences)
+plt.figure(figsize=(15,15))
+plt.imshow(wc, interpolation='bilinear')
+plt.axis("off")
+plt.show()
+
+# Define function to load jsonl file and extract the skill-patterns
+
+import json
+
+def load_jsonl(filename):
+    d_list = []
+    with open(filename, encoding='utf-8', mode='r') as in_f:
+        print("Load Jsonl:", filename)
+        for line in in_f:
+            item = json.loads(line.strip())
+            d_list.append(item)
+    return d_list
+
+skills = load_jsonl("skill_patterns.jsonl")
+
+# Display the unique job categories in the data
+Job_cat = data["Category"].unique()
+Job_cat
+
+# Selecting a job category role for further matching 
+Job_Category="Data Science"
+
+# Extracting total skills found in the data corresponding to the job category
+
+Total_skills = []
+if Job_Category != "ALL":
+    fltr = data[data["Category"] == Job_Category]["skills"]
+    for x in fltr:
+        for i in x:
+            Total_skills.append(i)
+else:
+    fltr = data["skills"]
+    for x in fltr:
+        for i in x:
+            Total_skills.append(i)
+
+            
+print(f"Skills required in {Job_Category} role : \n\n",unique_skills(Total_skills))
+
+
+# Create a histogram to visualize the distribution of skills corresponding to the job category
+
+fig = px.histogram(
+    x=Total_skills,
+    labels={"x": "Skills"},
+    title=f"{Job_Category} Distribution of Skills",
+).update_xaxes(categoryorder="total descending")
+fig.show()
+
+# Create a word cloud showing MOST used words in the corresponding job category
+
+text = ""
+for i in data[data["Category"] == Job_Category]["Clean_Resume"].values:
+    text += i + " "
+
+plt.figure(figsize=(8, 8))
+
+x, y = np.ogrid[:300, :300]
+
+mask = (x - 150) ** 2 + (y - 150) ** 2 > 130 ** 2
+mask = 255 * mask.astype(int)
+
+wc = WordCloud(
+    width=800,
+    height=800,
+    background_color="white",
+    min_font_size=6,
+    repeat=True,
+    mask=mask,
+)
+wc.generate(text)
+
+plt.axis("off")
+plt.imshow(wc, interpolation="bilinear")
+plt.title(f"Most Used Words in {Job_Category} Resume", fontsize=20)
+
+# Count the frequencies of skills 
+# Sort them in descending order.
+
+from collections import Counter
+
+skill_counts = Counter(Total_skills)
+skill_freq_dict = dict(skill_counts)
+
+sorted_skill_freq_dict = dict(sorted(skill_freq_dict.items(), key=lambda item: item[1], reverse=True))
+
+print("Skill Frequencies:\n")
+print(skill_freq_dict)
+
+print("\nSorted Skill Frequencies:\n")
+print(sorted_skill_freq_dict)
+
+# Display top N skills from the sorted skill frequency dictionary
+
+import itertools
+
+N = 25
+top_skills = dict(itertools.islice(sorted_skill_freq_dict.items(), N)) 
+top_skills_req = list(top_skills.keys())
+print(f"Top {N} skills required in {Job_Category} role :\n\n",top_skills_req)
+
+input_resume="""
+Dristanta Das
+
+123 Data Scientist Street
+Cityville, State 12345
+(123) 456-7890
+email@example.com
+linkedin.com/in/example
+
+Objective:
+Highly skilled Data Scientist with expertise in machine learning, Python programming, and data science techniques. Experienced in deep learning, database management, and business analytics. Seeking opportunities to apply advanced algorithms and visualization tools to drive impactful insights.
+
+Education:
+Master of Science in Data Science
+ABC University, City, State
+Graduated: 2022
+
+Bachelor of Engineering in Computer Science
+XYZ University, City, State
+Graduated: 2019
+
+Skills:
+
+Proficient in Python programming language, with expertise in NumPy, pandas, and scikit-learn libraries.
+Extensive experience in machine learning, deep learning, and data analytics techniques.
+Strong understanding of database management systems, including SQL for data manipulation.
+Skilled in data visualization using Tableau and other tools to convey insights effectively.
+Knowledgeable in business analytics principles and their application to real-world problems.
+Familiarity with natural language processing (NLP) techniques for text data analysis.
+Experienced in time series analysis and decision tree algorithms for predictive modeling.
+Competent in Java programming for software development and engineering tasks.
+Proficient in data analysis and visualization using various tools and techniques.
+Familiar with medium-scale bot development for automation and data extraction purposes.
+Strong background in computer science fundamentals and their application to data science projects.
+Experienced in data model design, segmentation, and cluster analysis techniques.
+Experience:
+
+Data Scientist
+Tech Company XYZ, City, State
+June 2022 - Present
+
+Developed and deployed machine learning models to solve complex business problems, resulting in a 15% improvement in efficiency.
+Utilized Python and deep learning techniques to enhance image recognition systems, leading to a 20% increase in accuracy.
+Designed and implemented database solutions for efficient data storage and retrieval, reducing query time by 25%.
+Conducted comprehensive data analysis and visualization using Tableau, facilitating data-driven decision-making processes.
+Collaborated with cross-functional teams to develop and deploy NLP algorithms for sentiment analysis, improving customer satisfaction by 30%.
+Projects:
+
+Developed a time series forecasting model to predict sales trends, achieving an accuracy rate of 85%.
+Implemented a decision tree algorithm to classify customer segments and personalize marketing strategies, resulting in a 20% increase in conversion rates.
+Certifications:
+
+Data Science Certification, Coursera, 2021
+Machine Learning Engineer Nanodegree, Udacity, 2020
+
+
+
+"""
+
+# Clean the input resume using defined function
+cleaned_input = cleanResume(input_resume)
+cleaned_input
+
+# Clean the input resume using defined function
+cleaned_input = cleanResume(input_resume)
+cleaned_input
+
+# Add patterns to the entity ruler to recognize entities corresponding to the job categories.
+patterns = df.Category.unique()
+for a in patterns:
+    ruler.add_patterns([{"label": "Job-Category", "pattern": a}])
+
+# Set up colors and options for rendering entities
+
+colors = {
+    "Job-Category": "linear-gradient(90deg, #aa9cfc, #fc9ce7)",
+    "SKILL": "linear-gradient(90deg, #9BE15D, #00E3AE)",
+    "ORG": "#ffd966",
+    "PERSON": "#e06666",
+    "GPE": "#9fc5e8",
+    "DATE": "#c27ba0",
+    "ORDINAL": "#674ea7",
+    "PRODUCT": "#f9cb9c",
+}
+options = {
+    "ents": [
+        "Job-Category",
+        "SKILL",
+        "ORG",
+        "PERSON",
+        "GPE",
+        "DATE",
+        "ORDINAL",
+        "PRODUCT",
+    ],
+    "colors": colors,
+}
+sent = nlp(cleaned_input)
+displacy.render(sent, style="ent", jupyter=True, options=options)
+
+# Generates a dependency parse visualization for the first 10 tokens of the processed text
+# Is helpful for understanding the grammatical structure and dependencies within the text.
+
+displacy.render(sent[0:10], style="dep", jupyter=True, options={"distance": 90})
+
+# Display top N skills required for the job category role
+
+print(f"Top {N} skills required for {Job_Category} role : ")
+top_skills_req
+
+# Calculate the percentage score of required skills present in the resume
+
+import itertools
+
+resume_skills = unique_skills(get_skills(cleaned_input))
+N = len(resume_skills)
+
+req_skills_dict = dict(itertools.islice(sorted_skill_freq_dict.items(), N)) 
+req_skills = list(req_skills_dict.keys())
+
+score = 0
+for x in req_skills:
+    if x in resume_skills:
+        score += 1
+req_skills_len = len(req_skills)
+
+match = round(score / req_skills_len * 100, 1)
+
+print(f"The current Resume is {match}% matched to your requirements")
+
+# Display input resume skills and required skills
+
+print("Resume Skills : \n",resume_skills,"\n")
+print(f"Required Skills for {Job_Category} : \n",req_skills)
+
+from sklearn.preprocessing import LabelEncoder
+
+# Initialize a LabelEncoder
+le = LabelEncoder()
+
+# Retrieve unique labels from the "Category" column
+labels = data['Category'].unique()
+
+# Fit the LabelEncoder to these labels
+le.fit(labels)
+
+# Encode the categories into numerical values using LabelEncoder
+data["Label"] = le.fit_transform(data["Category"])
+
+# Prepare data for machine learning by converting it into TF-IDF feature vectors
+# Splitting it into training and testing sets.
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from scipy.sparse import hstack
+
+requiredText = data['Clean_Resume'].values
+requiredTarget = data['Label'].values
+
+word_vectorizer = TfidfVectorizer(
+    sublinear_tf=True,
+    stop_words='english',
+    max_features=1500)
+
+word_vectorizer.fit(requiredText)
+WordFeatures = word_vectorizer.transform(requiredText)
+
+print ("Feature completed .....")
+
+X_train,X_test,y_train,y_test = train_test_split(WordFeatures,requiredTarget,random_state=0, test_size=0.2)
+print(X_train.shape)
+print(X_test.shape)
+
+# Initializes OneVsRestClassifier with a KNN classifier as the base estimator 
+clf = OneVsRestClassifier(KNeighborsClassifier())
+
+# Trains the classifier using the provided training data
+clf.fit(X_train, y_train)
+
+# Make predictions on the testing data 
+prediction = clf.predict(X_test)
+
+# Display performance of the classifier on both the training and testing data
+
+print('Accuracy of KNeighbors Classifier on training set: {:.2f}'.format(clf.score(X_train, y_train)))
+print('Accuracy of KNeighbors Classifier on test set: {:.2f}'.format(clf.score(X_test, y_test)))
+
+print("\n Classification report for classifier %s:\n%s\n" % (clf, metrics.classification_report(y_test, prediction)))
+
+# Save the trained classifier
+
+import joblib
+joblib.dump(clf, 'model.joblib')
+
+# Previously cleaned input resume
+cleaned_input
+
+# Transform cleaned input text into TF-IDF feature vectors for prediction 
+
+custom_features = word_vectorizer.transform([cleaned_input])
+
+print("Shape of custom features:", custom_features.shape)
+
+# Predict class label for the input resume using the classifier
+# Return the predicted class label in their original categorical form
+
+pred = clf.predict(custom_features)
+pred_class = le.inverse_transform(pred)
+
+print(f"Your resume matches the '{pred_class[0]}' job category.")
+
+# Reading the test resumes dataset
+
+test_ds = pd.read_csv('Test_Resumes.csv')
+test_ds
+
+# Cleaning the resume text and storing in separate column
+
+test_ds["Cleaned_text"] = test_ds.Resume_text.apply(lambda x : cleanResume(x))
+test_ds
+
+# Extracting skills from cleaned resume text and storing unique skills in 'skills' column
+
+test_ds["skills"] = test_ds["Cleaned_text"].str.lower().apply(get_skills)
+test_ds["skills"] = test_ds["skills"].apply(unique_skills)
+test_ds
+
+# Predicting the class labels(Category) for each resume in the test data using the trained classifier 
+
+predictions = []
+for text in test_ds['Cleaned_text'].values:
+    custom_features = word_vectorizer.transform([text])
+    
+    pred = clf.predict(custom_features)
+    
+    pred_class = le.inverse_transform(pred)
+    predictions.append(pred_class)
+    
+predictions
+
+# Storing the predicted categories in a separate column
+
+test_ds["Predicted Category"] = predictions
+test_ds
+
+# Define a function to calculate match score for a resume corresponding to the job category skills
+
+import itertools
+
+def score_calc(resume_skills):
+    N = len(resume_skills)
+    req_skills_dict = dict(itertools.islice(sorted_skill_freq_dict.items(), N)) 
+    req_skills = list(req_skills_dict.keys())
+    score = 0
+    for x in req_skills:
+        if x in resume_skills:
+            score += 1
+    match = round(score / N * 100, 1)
+    
+    return match
+
+# Calculate the score for each resume in the test data and store in a separate column
+
+test_ds["Match Score(%)"] = test_ds.skills.apply(lambda x : score_calc(x))
+test_ds
+
+# Sort the resulting data by the match score in descending order to list resumes with the most probability of getting hired
+
+test_ds.sort_values('Match Score(%)',ascending=False)
+

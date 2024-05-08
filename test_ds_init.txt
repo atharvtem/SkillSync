@@ -1,0 +1,177 @@
+import csv
+
+with open('Test_Resumes.csv', mode='w', newline='') as file:
+    writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    
+    data = [["Category","Resume_text"],
+        ['Java Developer', """John Doe
+
+123 Main Street, Anytown, USA | john.doe@email.com | (555) 123-4567
+
+Objective:
+Experienced Java Developer seeking to leverage [X years] of expertise in Java programming and software development to contribute effectively to [Company Name].
+
+Professional Experience:
+
+Java Developer
+ABC Tech, Anytown, USA | Jan 2020 - Present
+
+Developed and maintained Java-based applications, including e-commerce platforms and customer management systems.
+Collaborated with cross-functional teams to design and implement software solutions, ensuring alignment with business requirements.
+Conducted code reviews and provided feedback to ensure high-quality, scalable codebase.
+Participated in Agile development processes, contributing to sprint planning and retrospective meetings.
+Education:
+
+Bachelor of Science in Computer Science
+XYZ University, Anytown, USA | 2019
+
+Technical Skills:
+
+Programming Languages: Java, SQL
+Frameworks: Spring, Hibernate
+Web Technologies: HTML, CSS, JavaScript
+Tools: Eclipse, Git, Maven
+Databases: MySQL, Oracle
+Certifications:
+
+Oracle Certified Professional, Java SE Programmer"""],
+        ['Java Developer', """Jane Smith
+
+456 Oak Street, Springfield, USA | jane.smith@email.com | (555) 987-6543
+
+Objective:
+Dynamic Java Developer with a passion for creating robust, scalable software solutions. Seeking a challenging role at [Company Name] to apply my [X years] of experience in Java programming and proficiency in various frameworks.
+
+Professional Experience:
+
+Senior Java Developer
+Tech Innovations Inc., Springfield, USA | June 2018 - Present
+
+Led the development of a cloud-based Java application for real-time data analytics, resulting in a 30% increase in performance.
+Designed and implemented RESTful APIs using Spring Boot, facilitating seamless integration with external systems.
+Mentored junior developers, fostering a collaborative environment and ensuring adherence to best practices.
+Implemented continuous integration and deployment pipelines using Jenkins and Docker, reducing deployment time by 50%.
+Software Engineer
+Software Solutions Co., Springfield, USA | Jan 2016 - May 2018
+
+Developed and maintained enterprise-level Java applications, including a CRM system and inventory management software.
+Collaborated with stakeholders to gather requirements and translate them into technical specifications.
+Conducted thorough testing and debugging to ensure the stability and reliability of software products.
+Contributed to code reviews and provided constructive feedback to improve code quality and maintainability.
+Education:
+
+Bachelor of Science in Computer Science
+Springfield University, Springfield, USA | 2015
+
+Technical Skills:
+
+Programming Languages: Java, SQL
+Frameworks: Spring Framework (Spring Boot, Spring MVC, Spring Data), Hibernate
+Web Technologies: HTML, CSS, JavaScript, jQuery
+Tools: IntelliJ IDEA, Git, Maven, Jenkins, Docker
+Databases: MySQL, PostgreSQL"""],
+        ['Health and Fitness', """Emily Johnson
+
+789 Maple Avenue, Fitness Town, USA | emily.johnson@email.com | (555) 567-8901
+
+Objective:
+Passionate and certified Fitness Trainer with a proven track record of helping clients achieve their health and wellness goals. Seeking an opportunity to leverage my expertise in exercise science, nutrition, and motivational coaching to inspire individuals to lead healthier lifestyles.
+
+Professional Experience:
+
+Certified Personal Trainer
+FitPlus Gym, Fitness Town, USA | Jan 2019 - Present
+
+Conducted individualized fitness assessments and designed tailored workout programs to meet clients' needs and objectives.
+Provided ongoing support and guidance to clients, motivating them to adopt healthy habits and achieve sustainable results.
+Led group fitness classes, including HIIT, strength training, and yoga, fostering a supportive and inclusive environment.
+Stayed current with industry trends and research to continually enhance knowledge and skills in fitness training and nutrition.
+Fitness Instructor
+Active Life Wellness Center, Fitness Town, USA | June 2017 - Dec 2018
+
+Instructed various fitness classes, including cardio kickboxing, Zumba, and spin cycling, catering to diverse fitness levels and preferences.
+Demonstrated proper exercise techniques and equipment usage, ensuring clients' safety and effectiveness of workouts.
+Provided nutritional guidance and lifestyle recommendations to clients, promoting holistic health and wellness.
+Assisted in marketing efforts and community outreach initiatives to attract new clients and promote brand awareness.
+Education:
+
+Bachelor of Science in Exercise Science
+Fitness University, Fitness Town, USA | 2017
+
+Certifications:
+
+Certified Personal Trainer (CPT) - National Academy of Sports Medicine (NASM)
+Group Fitness Instructor Certification - American Council on Exercise (ACE)"""],
+        ['Civil Engineer', """Michael Thompson
+
+123 Elm Street, Cityville, USA | michael.thompson@email.com | (555) 123-4567
+
+Objective:
+Versatile Civil Engineer with a strong foundation in structural design and project management. Seeking a challenging role where I can apply my expertise in civil engineering principles to contribute to the successful completion of infrastructure projects.
+
+Professional Experience:
+
+Civil Engineer
+BuildPro Engineering, Cityville, USA | Jan 2018 - Present
+
+Managed multiple civil engineering projects from conception to completion, including residential and commercial developments, roadway design, and stormwater management.
+Conducted site investigations and surveys, analyzing data to develop engineering designs and construction plans.
+Prepared detailed cost estimates, schedules, and specifications, ensuring projects remained within budget and timeline constraints.
+Collaborated with architects, contractors, and regulatory agencies to obtain necessary permits and approvals.
+Assistant Civil Engineer
+Urban Solutions Inc., Cityville, USA | June 2016 - Dec 2017
+
+Assisted senior engineers in the design and analysis of structural components using AutoCAD and other engineering software.
+Conducted structural calculations and simulations to ensure compliance with building codes and industry standards.
+Participated in field inspections and quality control processes to verify construction activities met design specifications.
+Supported project managers in coordinating project logistics and communicating with stakeholders.
+Education:
+
+Bachelor of Science in Civil Engineering
+City College of Engineering, Cityville, USA | 2016
+
+Technical Skills:
+
+Proficient in AutoCAD, Revit, SAP2000, STAAD.Pro
+Knowledgeable in civil engineering principles, including structural analysis, site development, and construction management
+"""],
+        ['Data Science', """David Lee
+
+456 Pine Street, Datatown, USA | david.lee@email.com | (555) 987-6543
+
+Objective:
+Detail-oriented Data Scientist with a strong background in statistical analysis and machine learning. Seeking a challenging role where I can apply my analytical skills and expertise in data-driven decision-making to derive valuable insights and solutions.
+
+Professional Experience:
+
+Data Scientist
+Insight Analytics, Datatown, USA | Jan 2019 - Present
+
+Analyzed large datasets using statistical methods and machine learning algorithms to identify patterns and trends, resulting in actionable insights for business stakeholders.
+Developed predictive models to forecast sales, customer behavior, and other key performance indicators, improving decision-making processes and strategic planning.
+Designed and implemented data visualization dashboards using tools such as Tableau and Power BI, facilitating data-driven decision-making across departments.
+Collaborated with cross-functional teams to define project objectives, prioritize tasks, and communicate findings effectively.
+Data Analyst
+InfoTech Solutions, Datatown, USA | June 2017 - Dec 2018
+
+Cleaned, processed, and transformed raw data from various sources for analysis and reporting purposes, ensuring data quality and integrity.
+Conducted exploratory data analysis and hypothesis testing to uncover insights and support business objectives.
+Created automated data pipelines and scripts using Python and SQL to streamline data extraction, transformation, and loading processes.
+Presented findings and recommendations to stakeholders through reports, presentations, and interactive visualizations.
+Education:
+
+Master of Science in Data Science
+Data University, Datatown, USA | 2017
+
+Technical Skills:
+
+Programming Languages: Python, R, SQL
+Machine Learning Libraries: scikit-learn, TensorFlow, Keras
+Data Visualization Tools: Tableau, Power BI, Matplotlib, Seaborn
+Database Systems: MySQL, PostgreSQL, MongoDB
+Certifications:
+
+Data Science Certificate - Coursera
+"""]
+    ]
+    writer.writerows(data)
